@@ -35,8 +35,3 @@ class ProductsService:
             self.storage.decrement_stock(
                 product['product_id'], product['quantity'])
 
-        
-    
-    
-    
-

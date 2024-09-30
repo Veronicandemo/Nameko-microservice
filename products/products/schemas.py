@@ -1,5 +1,9 @@
-# dependency provider that gives the service read only access to configuration values at runtime
-from nameko  import config
+from marshmellow import Schema, fields
 
-# 
-from nameko.extensions import dependancyProvider
+
+class Products(Schema):
+    id = fields.Str(required=True)
+    title =  fields.Str(required=True)
+    passenger_capacity = fields.Int(required=True)
+    maximum_speed = fields.Int(required=True)
+    in_stock = fields.Int(required=True)
