@@ -1,0 +1,94 @@
+version: '2'
+services:
+  rabbit:
+    container_name: nameko-rabbitmq
+    image: rabbitmq:3.7-management
+    ports:
+      - '15673:15672'
+    restart: always
+
+  postgres:
+    container_name: postgres
+    image: postgres
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_DB: 'orders'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_USER: 'postgres'
+    restart: always
+
+  redis:
+    container_name: nameko-redis
+    image: redis
+    ports:
+      - '6380:6379'
+    command: [
+        'bash',
+        '-c',
+        '
+        docker-entrypoints.sh
+        --requirepass password
+        ',
+      ]
+    restart: always
+
+  orders:
+    container_name: orders
+    image: nameko/nameko-project-orders:latest
+    depends_on:
+      - rabbit
+      - postgres
+    ports:
+      - '8002:8000'
+    links:
+      - 'rabbit:nameko-rabbitmq'
+      - 'redis:nameko-redis'
+    environment:
+      DB_PASSWORD: 'password'
+      DB_USER: 'postgres'
+      DB_HOST: 'postgres'
+      DB_NAME: 'orders'
+      RABBIT_PASSWORD: 'password'
+      RABBIT_USER: 'guest'
+      RABBIT_HOST: 'host'
+      RABBIT_PORT: '5672'
+      RABBIT_MANAGEMENT_PORT: '15672'
+
+  products:
+    container_name: products
+    image: nameko/nameko-project-products:latest
+    depends_on:
+      - rabbit
+      - redis
+    ports:
+      - '8002:8000'
+    links:
+      - 'rabbit:nameko-rabbitmq'
+      - 'redis:nameko-redis'
+    environment:
+      REDIS_HOST: 'redis'
+      REDIS_PORT: '6379'
+      REDIS_INDEX: '11'
+      REDIS_PASSWORD: 'password'
+      RABBIT_PASSWORD: 'guest'
+      RABBIT_USER: 'guest'
+      RABBIT_HOST: 'rabbit'
+      RABBIT_PORT: '5672'
+      RABBIT_MANAGEMENT_PORT: '15672'
+
+  gateway:
+    container_name: nameko-gateway
+    image: nameko/nameko-project-gateway:latest
+    depends_on:
+      - rabbit
+    ports:
+      - '8003:8000'
+    links:
+      - 'rabbit:nameko-rabbitmq'
+    environment:
+      RABBIT_PASSWORD: 'guest'
+      RABBIT_USER: 'guest'
+      RABBIT_HOST: 'rabbit'
+      RABBIT_PORT: '5672'
+      RABBIT_MANAGEMENT_PORT: '15672'
